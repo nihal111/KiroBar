@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import KiroBarCore
 
 struct KiroMenuView: View {
     let usage: KiroUsage?
