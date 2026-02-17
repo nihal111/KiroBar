@@ -151,6 +151,7 @@ struct SettingsView: View {
                 get: { launchAtLogin },
                 set: { launchAtLogin = $0; LaunchAtLogin.isEnabled = $0 }
             ))
+            Link("About KiroBar", destination: URL(string: "https://github.com/nihal111/KiroBar")!)
         }
         .padding(20)
         .frame(width: 250)
