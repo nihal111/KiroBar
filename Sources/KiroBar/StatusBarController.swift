@@ -2,9 +2,14 @@ import AppKit
 import SwiftUI
 import KiroBarCore
 
+class KiroBarState: ObservableObject {
+    @Published var usage: KiroUsage?
+    @Published var error: String?
+    @Published var isRefreshing = false
+}
+
 struct KiroMenuView: View {
-    let usage: KiroUsage?
-    let error: String?
+    @ObservedObject var state: KiroBarState
     let onRefresh: () -> Void
     let onSettings: () -> Void
     let onQuit: () -> Void
@@ -20,18 +25,18 @@ struct KiroMenuView: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                     Spacer()
-                    if let u = usage {
+                    if let u = state.usage {
                         Text(u.planName)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 }
-                if let e = error {
+                if let e = state.error {
                     Text(e)
                         .font(.footnote)
                         .foregroundStyle(.red)
-                } else if usage == nil {
-                    Text("Loading...")
+                } else if state.usage == nil {
+                    Text(state.isRefreshing ? "Refreshing..." : "Loading...")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -39,7 +44,7 @@ struct KiroMenuView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             
-            if let u = usage {
+            if let u = state.usage {
                 Divider().padding(.horizontal, 12)
                 
                 // Credits section
@@ -192,8 +197,7 @@ class StatusBarController: NSObject {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var settingsWindow: NSWindow?
-    private var usage: KiroUsage?
-    private var error: String?
+    private let state = KiroBarState()
     private let probe = KiroUsageProbe()
     private var eventMonitor: Any?
     
@@ -214,7 +218,7 @@ class StatusBarController: NSObject {
         popover = NSPopover()
         popover.behavior = .transient
         popover.animates = true
-        updatePopover()
+        setupPopover()
         
         refresh()
         Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in self?.refresh() }
@@ -236,30 +240,30 @@ class StatusBarController: NSObject {
     }
     
     func refresh() {
+        state.isRefreshing = true
         Task {
             do {
                 let u = try await probe.fetch()
                 await MainActor.run {
-                    self.usage = u
-                    self.error = nil
+                    self.state.usage = u
+                    self.state.error = nil
+                    self.state.isRefreshing = false
                     self.statusItem.button?.title = " \(u.percent)%"
-                    self.updatePopover()
                 }
             } catch {
                 await MainActor.run {
-                    self.error = error.localizedDescription
+                    self.state.error = error.localizedDescription
+                    self.state.isRefreshing = false
                     self.statusItem.button?.title = " ⚠️"
-                    self.updatePopover()
                 }
             }
         }
     }
     
-    private func updatePopover() {
+    private func setupPopover() {
         popover.contentViewController = NSHostingController(rootView: 
             KiroMenuView(
-                usage: usage,
-                error: error,
+                state: state,
                 onRefresh: { [weak self] in self?.refresh() },
                 onSettings: { [weak self] in self?.showSettings() },
                 onQuit: { NSApp.terminate(nil) }
