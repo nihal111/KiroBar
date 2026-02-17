@@ -5,6 +5,7 @@ struct KiroMenuView: View {
     let usage: KiroUsage?
     let error: String?
     let onRefresh: () -> Void
+    let onSettings: () -> Void
     let onQuit: () -> Void
     
     private let kiroOrange = Color(red: 1.0, green: 0.6, blue: 0)
@@ -91,6 +92,15 @@ struct KiroMenuView: View {
                 }
                 .buttonStyle(MenuButtonStyle())
                 
+                Button(action: onSettings) {
+                    HStack {
+                        Text("Settings...")
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(MenuButtonStyle())
+                
                 Button(action: onQuit) {
                     HStack {
                         Text("Quit")
@@ -109,11 +119,14 @@ struct KiroMenuView: View {
 }
 
 struct MenuButtonStyle: ButtonStyle {
+    @State private var isHovered = false
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(configuration.isPressed ? Color.accentColor.opacity(0.2) : Color.clear)
+            .background(configuration.isPressed ? Color.accentColor.opacity(0.3) : (isHovered ? Color.accentColor.opacity(0.15) : Color.clear))
+            .onHover { isHovered = $0 }
     }
 }
 
@@ -128,9 +141,55 @@ struct VisualEffectView: NSViewRepresentable {
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
 
+struct SettingsView: View {
+    @State private var launchAtLogin = LaunchAtLogin.isEnabled
+    
+    var body: some View {
+        Form {
+            Toggle("Launch at login", isOn: Binding(
+                get: { launchAtLogin },
+                set: { launchAtLogin = $0; LaunchAtLogin.isEnabled = $0 }
+            ))
+        }
+        .padding(20)
+        .frame(width: 250)
+    }
+}
+
+class LaunchAtLogin {
+    private static let plistPath = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/LaunchAgents/com.kirobar.app.plist")
+    
+    static var isEnabled: Bool {
+        get { FileManager.default.fileExists(atPath: plistPath.path) }
+        set { newValue ? install() : uninstall() }
+    }
+    
+    private static func install() {
+        let execPath = Bundle.main.executablePath ?? ProcessInfo.processInfo.arguments[0]
+        let plist = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>Label</key><string>com.kirobar.app</string>
+            <key>ProgramArguments</key><array><string>\(execPath)</string></array>
+            <key>RunAtLoad</key><true/>
+        </dict>
+        </plist>
+        """
+        try? plist.write(to: plistPath, atomically: true, encoding: .utf8)
+    }
+    
+    private static func uninstall() {
+        try? FileManager.default.removeItem(at: plistPath)
+    }
+}
+
 class StatusBarController: NSObject {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
+    private var settingsWindow: NSWindow?
     private var usage: KiroUsage?
     private var error: String?
     private let probe = KiroUsageProbe()
@@ -200,9 +259,27 @@ class StatusBarController: NSObject {
                 usage: usage,
                 error: error,
                 onRefresh: { [weak self] in self?.refresh() },
+                onSettings: { [weak self] in self?.showSettings() },
                 onQuit: { NSApp.terminate(nil) }
             )
         )
+    }
+    
+    private func showSettings() {
+        popover.performClose(nil)
+        if settingsWindow == nil {
+            settingsWindow = NSWindow(
+                contentRect: .zero,
+                styleMask: [.titled, .closable],
+                backing: .buffered,
+                defer: false
+            )
+            settingsWindow?.title = "KiroBar Settings"
+            settingsWindow?.center()
+        }
+        settingsWindow?.contentView = NSHostingView(rootView: SettingsView())
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
     
     @objc private func togglePopover() {
