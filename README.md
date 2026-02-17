@@ -6,10 +6,6 @@ A minimal macOS menu bar app that displays your [Kiro](https://kiro.dev) usage.
   <img src="docs/screenshot.png" alt="KiroBar Screenshot">
 </p>
 
-## Why not just use CodexBar?
-
-CodexBar is blocked in some corporate environments (including Amazon). Many Kiro CLI users are internal employees who can't run it. KiroBar is a minimal macOS menu bar alternative that works where CodexBar doesn't.
-
 ## Features
 
 - Shows Kiro credits usage percentage in the menu bar
@@ -43,6 +39,26 @@ To launch automatically on login, click the menu bar icon → Settings → enabl
 
 - **Usage check**: Runs `kiro-cli chat --no-interactive "/usage"` and parses the output
 - **Launch at login**: Creates a LaunchAgent at `~/Library/LaunchAgents/com.kirobar.app.plist`
+- **Refresh**: Every 5 minutes, or manually via ⌘R
+
+**Failure modes:**
+- If `kiro-cli` isn't installed or not logged in, the menu bar shows ⚠️ and the popover displays the error
+- Parsing failures (e.g., output format changes) show a generic error message
+- The CLI runs off the main thread; no timeout is set, so a hanging command will block refresh until it completes
+- No automatic retries or backoff—just waits for the next 5-minute refresh cycle
+
+## FAQ
+
+**Why not just use CodexBar?**
+
+CodexBar is blocked in some corporate environments (including Amazon). Many Kiro CLI users are internal employees who can't run it. KiroBar is a minimal macOS menu bar alternative that works where CodexBar doesn't.
+
+**Why doesn't `swift test` work?**
+
+XCTest requires Xcode to be installed. To support environments with only Swift CLI tools, tests are built as an executable. Run them with:
+```bash
+swift build && .build/debug/KiroBarTests
+```
 
 ## Attribution
 
