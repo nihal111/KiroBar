@@ -6,6 +6,10 @@ A minimal macOS menu bar app that displays your [Kiro](https://kiro.dev) usage.
   <img src="docs/screenshot.png" alt="KiroBar Screenshot">
 </p>
 
+## Why not just use CodexBar?
+
+CodexBar is blocked in some corporate environments (including Amazon). Many Kiro CLI users are internal employees who can't run it. KiroBar is a minimal macOS menu bar alternative that works where CodexBar doesn't.
+
 ## Features
 
 - Shows Kiro credits usage percentage in the menu bar
@@ -22,7 +26,7 @@ A minimal macOS menu bar app that displays your [Kiro](https://kiro.dev) usage.
 
 ```bash
 # Clone and build
-git clone https://github.com/user/KiroBar.git
+git clone https://github.com/nihal111/KiroBar.git
 cd KiroBar
 swift build -c release
 
