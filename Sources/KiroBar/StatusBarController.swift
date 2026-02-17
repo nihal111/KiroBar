@@ -270,14 +270,16 @@ class StatusBarController: NSObject {
     private func showSettings() {
         popover.performClose(nil)
         if settingsWindow == nil {
-            settingsWindow = NSWindow(
+            let window = NSWindow(
                 contentRect: .zero,
                 styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false
             )
-            settingsWindow?.title = "KiroBar Settings"
-            settingsWindow?.center()
+            window.title = "KiroBar Settings"
+            window.center()
+            window.isReleasedWhenClosed = false
+            settingsWindow = window
         }
         settingsWindow?.contentView = NSHostingView(rootView: SettingsView())
         settingsWindow?.makeKeyAndOrderFront(nil)
