@@ -20,16 +20,22 @@ A minimal macOS menu bar app that displays your [Kiro](https://kiro.dev) usage.
 
 ## Installation
 
+### Download (recommended)
+1. Download `KiroBar-macos.zip` from [Releases](https://github.com/nihal111/KiroBar/releases)
+2. Unzip and install:
+   ```bash
+   unzip KiroBar-macos.zip
+   sudo mv KiroBar /usr/local/bin/
+   ```
+3. Run: `/usr/local/bin/KiroBar &`
+4. If macOS blocks it: `xattr -d com.apple.quarantine /usr/local/bin/KiroBar`
+
+### Build from source
 ```bash
-# Clone and build
 git clone https://github.com/nihal111/KiroBar.git
 cd KiroBar
 swift build -c release
-
-# Copy to a permanent location
 sudo cp .build/release/KiroBar /usr/local/bin/
-
-# Run
 /usr/local/bin/KiroBar &
 ```
 
