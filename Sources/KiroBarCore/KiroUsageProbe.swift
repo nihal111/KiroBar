@@ -1,16 +1,16 @@
 import Foundation
 
-struct KiroUsage {
-    let planName: String
-    let creditsUsed: Double
-    let creditsTotal: Double
-    let percent: Int
-    let resetsAt: Date?
+public struct KiroUsage {
+    public let planName: String
+    public let creditsUsed: Double
+    public let creditsTotal: Double
+    public let percent: Int
+    public let resetsAt: Date?
 }
 
-enum KiroProbeError: LocalizedError {
+public enum KiroProbeError: LocalizedError, Equatable {
     case cliNotFound, notLoggedIn, parseFailed(String)
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .cliNotFound: "kiro-cli not found"
         case .notLoggedIn: "Not logged in"
@@ -19,14 +19,16 @@ enum KiroProbeError: LocalizedError {
     }
 }
 
-struct KiroUsageProbe {
-    func fetch() async throws -> KiroUsage {
+public struct KiroUsageProbe {
+    public init() {}
+    
+    public func fetch() async throws -> KiroUsage {
         let output = try await runCLI()
-        return try parse(output)
+        return try Self.parse(output)
     }
     
     private func runCLI() async throws -> String {
-        guard let path = which("kiro-cli") else { throw KiroProbeError.cliNotFound }
+        guard let path = Self.which("kiro-cli") else { throw KiroProbeError.cliNotFound }
         
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
@@ -55,7 +57,7 @@ struct KiroUsageProbe {
         }
     }
     
-    private func parse(_ output: String) throws -> KiroUsage {
+    public static func parse(_ output: String) throws -> KiroUsage {
         let stripped = stripANSI(output)
         let lower = stripped.lowercased()
         
@@ -63,18 +65,18 @@ struct KiroUsageProbe {
             throw KiroProbeError.notLoggedIn
         }
         
-        // Plan name: "| KIRO FREE" or "Plan: X"
+        // Plan name: "| KIRO FREE" or "│ KIRO FREE" or "Plan: X"
         var planName = "Kiro"
-        if let m = stripped.range(of: #"\|\s*(KIRO\s+\w+)"#, options: .regularExpression) {
-            planName = stripped[m].replacingOccurrences(of: "|", with: "").trimmingCharacters(in: .whitespaces)
+        if let m = stripped.range(of: #"[│|]\s*(KIRO\s+\w+)"#, options: .regularExpression) {
+            planName = stripped[m].replacingOccurrences(of: "│", with: "").replacingOccurrences(of: "|", with: "").trimmingCharacters(in: .whitespaces)
         } else if let m = stripped.range(of: #"Plan:\s*(.+)"#, options: .regularExpression) {
             let line = stripped[m].replacingOccurrences(of: "Plan:", with: "").trimmingCharacters(in: .whitespaces)
             if let first = line.split(separator: "\n").first { planName = String(first) }
         }
         
-        // Percent: "███...█ X%"
+        // Percent: "███...█ X%" or "██░░░ X%"
         var percent = 0
-        if let m = stripped.range(of: #"█+\s*(\d+)%"#, options: .regularExpression),
+        if let m = stripped.range(of: #"[█░]+\s*(\d+)%"#, options: .regularExpression),
            let n = stripped[m].range(of: #"\d+"#, options: .regularExpression) {
             percent = Int(stripped[m][n]) ?? 0
         }
@@ -106,11 +108,11 @@ struct KiroUsageProbe {
         return KiroUsage(planName: planName, creditsUsed: used, creditsTotal: total, percent: percent, resetsAt: resetsAt)
     }
     
-    private func stripANSI(_ s: String) -> String {
+    private static func stripANSI(_ s: String) -> String {
         s.replacingOccurrences(of: #"\x1B\[[0-9;?]*[A-Za-z]|\x1B\].*?\x07"#, with: "", options: .regularExpression)
     }
     
-    private func parseResetDate(_ s: String) -> Date? {
+    private static func parseResetDate(_ s: String) -> Date? {
         let parts = s.split(separator: "/")
         guard parts.count == 2, let m = Int(parts[0]), let d = Int(parts[1]) else { return nil }
         let cal = Calendar.current
@@ -121,7 +123,7 @@ struct KiroUsageProbe {
         return cal.date(from: c)
     }
     
-    private func which(_ cmd: String) -> String? {
+    private static func which(_ cmd: String) -> String? {
         let paths = (ProcessInfo.processInfo.environment["PATH"] ?? "/usr/local/bin:/usr/bin")
             .split(separator: ":").map(String.init)
         for p in paths {
