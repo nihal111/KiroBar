@@ -92,11 +92,16 @@ struct KiroMenuView: View {
                     HStack {
                         Text("Refresh")
                         Spacer()
-                        Text("⌘R").foregroundStyle(.secondary)
+                        if state.isRefreshing {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Text("⌘R").foregroundStyle(.secondary)
+                        }
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(MenuButtonStyle())
+                .disabled(state.isRefreshing)
                 
                 Button(action: onSettings) {
                     HStack {
