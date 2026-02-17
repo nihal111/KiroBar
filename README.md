@@ -24,9 +24,14 @@ git clone https://github.com/user/KiroBar.git
 cd KiroBar
 swift build -c release
 
+# Copy to a permanent location
+sudo cp .build/release/KiroBar /usr/local/bin/
+
 # Run
-.build/release/KiroBar &
+/usr/local/bin/KiroBar &
 ```
+
+To launch automatically on login, click the menu bar icon → Settings → enable "Launch at login".
 
 ## Attribution
 
