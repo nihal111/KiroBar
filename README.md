@@ -35,6 +35,11 @@ sudo cp .build/release/KiroBar /usr/local/bin/
 
 To launch automatically on login, click the menu bar icon → Settings → enable "Launch at login".
 
+## How it works
+
+- **Usage check**: Runs `kiro-cli chat --no-interactive "/usage"` and parses the output
+- **Launch at login**: Creates a LaunchAgent at `~/Library/LaunchAgents/com.kirobar.app.plist`
+
 ## Attribution
 
 This project is inspired by and based on [CodexBar](https://github.com/steipete/CodexBar) by [@steipete](https://github.com/steipete). CodexBar is a comprehensive menu bar app supporting multiple AI providers. KiroBar extracts and simplifies the Kiro-specific functionality into a minimal, standalone app.
