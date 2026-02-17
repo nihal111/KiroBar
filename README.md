@@ -2,7 +2,9 @@
 
 A minimal macOS menu bar app that displays your [Kiro](https://kiro.dev) usage.
 
-![KiroBar Screenshot](docs/screenshot.png)
+<p align="center">
+  <img src="docs/screenshot.png" alt="KiroBar Screenshot">
+</p>
 
 ## Features
 
