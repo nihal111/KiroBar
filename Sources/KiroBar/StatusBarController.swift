@@ -205,6 +205,7 @@ class StatusBarController: NSObject {
     private let state = KiroBarState()
     private let probe = KiroUsageProbe()
     private var eventMonitor: Any?
+    private var keyMonitor: Any?
     
     override init() {
         super.init()
@@ -231,6 +232,15 @@ class StatusBarController: NSObject {
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             self?.popover.performClose(nil)
         }
+        
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard self?.popover.isShown == true else { return event }
+            if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "r" {
+                self?.refresh()
+                return nil
+            }
+            return event
+        }
     }
     
     private func loadMenuBarIcon() -> NSImage? {
@@ -242,6 +252,7 @@ class StatusBarController: NSObject {
     
     deinit {
         if let monitor = eventMonitor { NSEvent.removeMonitor(monitor) }
+        if let monitor = keyMonitor { NSEvent.removeMonitor(monitor) }
     }
     
     func refresh() {
